@@ -13,14 +13,37 @@ using AForge.Video.DirectShow;
 using BarcodeLib.BarcodeReader;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Reflection;
+using System.IO.Ports;
+using System.IO;
 
 namespace LectorQRv2.Views
 {
     public partial class Form1 : Form
     {
+    	 SerialPort port;
+	 string comPort;
+    	
         public Form1()
         {
-            InitializeComponent();
+           try
+            {
+                InitializeComponent();
+                comPort = "COM5"; //the comport the Arduino is connected to... you will have to change this most likely
+                port = new SerialPort(comPort, 9600, Parity.None, 8, StopBits.One);
+                port.DtrEnable = true;
+                port.Open();
+
+            }
+            catch (Exception /*ex*/)
+            {
+                textBox1.Text = "Can't Open COM5"; 
+            }
+        }
+        
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (port.IsOpen)
+                port.Close();
         }
 
         private FilterInfoCollection Dispositivos;
@@ -151,6 +174,7 @@ namespace LectorQRv2.Views
             }
 
             MessageBox.Show(this, "Se inserta placa exitosamente");
+             port.Write("1"); // Abre la puerta de Entrada
         }
 
         private void btnCedula2_Click(object sender, EventArgs e)
@@ -189,6 +213,7 @@ namespace LectorQRv2.Views
 
                 ControlParqueo.ConfirmarSalida(p);
                 MessageBox.Show(this, "Salida exitosa!");
+                 port.Write("0"); // Abre la puerta de Salida
             }
             catch (Models.InvalidPlacaException ipe)
             {
